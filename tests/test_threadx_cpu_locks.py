@@ -54,6 +54,20 @@ def test_virtual_alias_shares_its_parent_lock(cpu_alias_pool):
     assert "model_loader:cpu" in pool._family_keys["cpu"]
 
 
+def test_one_shot_device_iterable_registers_workers_and_accepts_tasks():
+    pool = DeviceThreadPool(
+        devices=(device for device in [torch.device("cpu")]),
+        empty_cache_every_n=0,
+    )
+    try:
+        future = pool.submit("cpu", lambda: 42)
+
+        assert future.result(timeout=1.0) == 42
+        assert pool.stats()["per_device"]["cpu"] == 1
+    finally:
+        pool.shutdown(wait=True)
+
+
 def test_family_read_lock_acquires_the_shared_lock_once(cpu_alias_pool):
     pool = cpu_alias_pool
 

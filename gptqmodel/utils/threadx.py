@@ -802,6 +802,11 @@ class DeviceThreadPool:
                 discovered.append(torch.device("cpu"))
             devices = discovered
 
+        # The constructor plans affinity, budgets intra-op threads, and then
+        # registers workers in separate passes. Preserve one-shot iterables
+        # across those passes while retaining the public Iterable contract.
+        devices = list(devices)
+
         # Locks and device registry (keyed by "type[:index]" strings like 'cuda:0').
         self._locks: Dict[str, _RWLock] = {}
         self._devices_by_key: Dict[str, torch.device] = {}
